@@ -1,0 +1,14 @@
+TOPIC
+    about_GistProvider
+
+LONG DESCRIPTION
+    A PowerShell Package Provider that finds and installs package based on Github username
+
+EXAMPLES
+    Find-Package -ProviderName Gist -Source dfinke
+
+KEYWORDS
+    PackageManagement, GistProvider
+
+SEE ALSO
+    https://github.com/dfinke/OneGetGistProvider

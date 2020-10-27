@@ -389,3 +389,10 @@ function Get-PlatformInfo {
         return "unknown"
     }
 }
+
+function Get-LibmiSupport {
+    $platformInfo = [PlatformInfo]::new()
+    DetectPlatform $platformInfo
+    return $platformInfo.notSupportMI
+}
+

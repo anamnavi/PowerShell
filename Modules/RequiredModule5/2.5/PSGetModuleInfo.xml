@@ -1,0 +1,144 @@
+<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04">
+  <Obj RefId="0">
+    <TN RefId="0">
+      <T>Microsoft.PowerShell.Commands.PSRepositoryItemInfo</T>
+      <T>System.Management.Automation.PSCustomObject</T>
+      <T>System.Object</T>
+    </TN>
+    <MS>
+      <S N="Name">RequiredModule5</S>
+      <Version N="Version">2.5</Version>
+      <S N="Type">Module</S>
+      <S N="Description">RequiredModule5 module</S>
+      <S N="Author">manikb</S>
+      <S N="CompanyName">dscgalleryuser</S>
+      <S N="Copyright">(c) 2015 manikb. All rights reserved.</S>
+      <DT N="PublishedDate">2015-10-30T01:17:28-04:00</DT>
+      <Obj N="InstalledDate" RefId="1">
+        <DT>2020-10-16T15:27:10.7318533-04:00</DT>
+        <MS>
+          <Obj N="DisplayHint" RefId="2">
+            <TN RefId="1">
+              <T>Microsoft.PowerShell.Commands.DisplayHintType</T>
+              <T>System.Enum</T>
+              <T>System.ValueType</T>
+              <T>System.Object</T>
+            </TN>
+            <ToString>DateTime</ToString>
+            <I32>2</I32>
+          </Obj>
+        </MS>
+      </Obj>
+      <Nil N="UpdatedDate" />
+      <URI N="LicenseUri">http://requiredmodule5.com/license</URI>
+      <URI N="ProjectUri">http://requiredmodule5.com/</URI>
+      <URI N="IconUri">http://requiredmodule5.com/icon</URI>
+      <Obj N="Tags" RefId="3">
+        <TN RefId="2">
+          <T>System.Object[]</T>
+          <T>System.Array</T>
+          <T>System.Object</T>
+        </TN>
+        <LST>
+          <S>Tag1</S>
+          <S>Tag2</S>
+          <S>Tag-RequiredModule5-2.5</S>
+          <S>PSModule</S>
+        </LST>
+      </Obj>
+      <Obj N="Includes" RefId="4">
+        <TN RefId="3">
+          <T>System.Collections.Hashtable</T>
+          <T>System.Object</T>
+        </TN>
+        <DCT>
+          <En>
+            <S N="Key">Cmdlet</S>
+            <Obj N="Value" RefId="5">
+              <TNRef RefId="2" />
+              <LST>
+                <S>*</S>
+              </LST>
+            </Obj>
+          </En>
+          <En>
+            <S N="Key">DscResource</S>
+            <Obj N="Value" RefId="6">
+              <TNRef RefId="2" />
+              <LST />
+            </Obj>
+          </En>
+          <En>
+            <S N="Key">Command</S>
+            <Obj N="Value" RefId="7">
+              <TNRef RefId="2" />
+              <LST>
+                <S>*</S>
+                <S>Get-RequiredModule5</S>
+              </LST>
+            </Obj>
+          </En>
+          <En>
+            <S N="Key">Workflow</S>
+            <Ref N="Value" RefId="6" />
+          </En>
+          <En>
+            <S N="Key">Function</S>
+            <Obj N="Value" RefId="8">
+              <TNRef RefId="2" />
+              <LST>
+                <S>Get-RequiredModule5</S>
+              </LST>
+            </Obj>
+          </En>
+          <En>
+            <S N="Key">RoleCapability</S>
+            <Ref N="Value" RefId="6" />
+          </En>
+        </DCT>
+      </Obj>
+      <Nil N="PowerShellGetFormatVersion" />
+      <S N="ReleaseNotes">RequiredModule5 release notes</S>
+      <Obj N="Dependencies" RefId="9">
+        <TNRef RefId="2" />
+        <LST />
+      </Obj>
+      <S N="RepositorySourceLocation">https://www.poshtestgallery.com/api/v2/</S>
+      <S N="Repository">OneGetTestSource</S>
+      <S N="PackageManagementProvider">NuGet</S>
+      <Obj N="AdditionalMetadata" RefId="10">
+        <TN RefId="4">
+          <T>System.Management.Automation.PSCustomObject</T>
+          <T>System.Object</T>
+        </TN>
+        <MS>
+          <S N="copyright">(c) 2015 manikb. All rights reserved.</S>
+          <S N="description">RequiredModule5 module</S>
+          <S N="requireLicenseAcceptance">True</S>
+          <S N="releaseNotes">RequiredModule5 release notes</S>
+          <S N="isLatestVersion">True</S>
+          <S N="isAbsoluteLatestVersion">True</S>
+          <S N="versionDownloadCount">1</S>
+          <S N="downloadCount">855</S>
+          <S N="packageSize">4637</S>
+          <S N="published">10/30/2015 1:17:28 AM -04:00</S>
+          <S N="created">10/30/2015 1:17:28 AM -04:00</S>
+          <S N="lastUpdated">11/10/2015 9:19:11 PM -05:00</S>
+          <S N="tags">Tag1 Tag2 Tag-RequiredModule5-2.5 PSModule</S>
+          <S N="developmentDependency">False</S>
+          <S N="updated">2015-11-10T21:19:11Z</S>
+          <S N="NormalizedVersion">2.5.0</S>
+          <S N="Authors">manikb</S>
+          <S N="IsPrerelease">false</S>
+          <S N="ItemType">Module</S>
+          <S N="FileList">RequiredModule5.nuspec|RequiredModule5.psd1|RequiredModule5.psm1</S>
+          <S N="Cmdlets">*</S>
+          <S N="Functions">Get-RequiredModule5</S>
+          <S N="GUID">987070c1-f795-4c35-9d07-b0e992c322e2</S>
+          <S N="CompanyName">Unknown</S>
+        </MS>
+      </Obj>
+      <S N="InstalledLocation">C:\Users\annavied\Documents\PowerShell\Modules\RequiredModule5\2.5</S>
+    </MS>
+  </Obj>
+</Objs>

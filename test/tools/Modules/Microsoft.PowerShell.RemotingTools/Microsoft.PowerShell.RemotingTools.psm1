@@ -23,6 +23,8 @@ class PlatformInfo
     [bool] $isOpenSUSE13
     [bool] $isOpenSUSE42_1
     [bool] $isRedHatFamily
+
+    [bool] $notSupportMI
 }
 
 function DetectPlatform
@@ -69,6 +71,10 @@ function DetectPlatform
         $platformInfo.isOpenSUSE13 = $platformInfo.isOpenSUSE -and ($LinuxInfo.VERSION_ID -match '13')
         $platformInfo.isOpenSUSE42_1 = $platformInfo.isOpenSUSE -and ($LinuxInfo.VERSION_ID -match '42.1')
         $platformInfo.isRedHatFamily = $platformInfo.isCentOS -or $platformInfo.isFedora -or $platformInfo.isOpenSUSE
+        $platformInfo.notSupportMI = ($LinuxInfo.ID -match 'alpine|raspbian') -or
+            ($LinuxInfo.ID -match 'debian' -and ($LinuxInfo.VERSION_ID -match '10' -or $LinuxInfo.VERSION_ID -match '')) -or
+            ($LinuxInfo.ID -match 'centos' -and $LinuxInfo.VERSION_ID -match '8') -or
+            ($LinuxInfo.ID -match 'ubuntu' -and $LinuxInfo.VERSION_ID -match '20.04')
     }
 }
 
