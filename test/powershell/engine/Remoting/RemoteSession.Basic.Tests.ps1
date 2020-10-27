@@ -9,9 +9,10 @@ Describe "New-PSSession basic test" -Tag @("CI") {
         if (
             ($platformInfo.Platform -match "alpine|raspbian") -or
             ($platformInfo.Platform -eq "debian" -and ($platformInfo.Version -eq '10' -or $platformInfo.Version -eq '')) -or # debian 11 has empty Version ID
-            ($platformInfo.Platform -eq 'centos' -and $platformInfo.Version -eq '8')
+            ($platformInfo.Platform -eq 'centos' -and $platformInfo.Version -eq '8') -or
+            ($platformInfo.Platform -eq 'ubuntu' -and $platformInfo.Version -eq '20.04')
         ) {
-            Set-ItResult -Skipped -Because "MI library not available for Alpine, Raspberry Pi, Debian 10 and 11, and CentOS 8"
+            Set-ItResult -Skipped -Because "MI library not available for Alpine, Raspberry Pi, Debian 10 and 11, CentOS 8, and Ubuntu 20.04"
             return
         }
 
@@ -26,9 +27,10 @@ Describe "Basic Auth over HTTP not allowed on Unix" -Tag @("CI") {
         if (
             ($platformInfo.Platform -match "alpine|raspbian") -or
             ($platformInfo.Platform -eq "debian" -and ($platformInfo.Version -eq '10' -or $platformInfo.Version -eq '')) -or # debian 11 has empty Version ID
-            ($platformInfo.Platform -eq 'centos' -and $platformInfo.Version -eq '8')
+            ($platformInfo.Platform -eq 'centos' -and $platformInfo.Version -eq '8') -or
+            ($platformInfo.Platform -eq 'ubuntu' -and $platformInfo.Version -eq '20.04')
         ) {
-            Set-ItResult -Skipped -Because "MI library not available for Alpine, Raspberry Pi, Debian 10 and 11, and CentOS 8"
+            Set-ItResult -Skipped -Because "MI library not available for Alpine, Raspberry Pi, Debian 10 and 11, CentOS 8, and Ubuntu 20.04"
             return
         }
 
@@ -47,9 +49,10 @@ Describe "Basic Auth over HTTP not allowed on Unix" -Tag @("CI") {
         if (
             ($platformInfo.Platform -match "alpine|raspbian") -or
             ($platformInfo.Platform -eq "debian" -and ($platformInfo.Version -eq '10' -or $platformInfo.Version -eq '')) -or # debian 11 has empty Version ID
-            ($platformInfo.Platform -eq 'centos' -and $platformInfo.Version -eq '8')
+            ($platformInfo.Platform -eq 'centos' -and $platformInfo.Version -eq '8') -or
+            ($platformInfo.Platform -eq 'ubuntu' -and $platformInfo.Version -eq '20.04')
         ) {
-            Set-ItResult -Skipped -Because "MI library not available for Alpine, Raspberry Pi, Debian 10 and 11, and CentOS 8"
+            Set-ItResult -Skipped -Because "MI library not available for Alpine, Raspberry Pi, Debian 10 and 11, CentOS 8, and Ubuntu 20.04"
             return
         }
 
