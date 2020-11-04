@@ -3814,7 +3814,7 @@ namespace Microsoft.PowerShell.Commands
                             value,
                             typeof(byte[]),
                             CultureInfo.CurrentCulture)
-                        : new byte[] { };
+                        : Array.Empty<byte>();
                     break;
 
                 case RegistryValueKind.DWord:
@@ -3834,7 +3834,9 @@ namespace Microsoft.PowerShell.Commands
                         {
                             value = 0;
                         }
-                    } break;
+                    }
+                    
+                    break;
 
                 case RegistryValueKind.ExpandString:
                     value = (value != null)
@@ -3851,7 +3853,7 @@ namespace Microsoft.PowerShell.Commands
                             value,
                             typeof(string[]),
                             CultureInfo.CurrentCulture)
-                        : new string[] { };
+                        : Array.Empty<string>();
                     break;
 
                 case RegistryValueKind.QWord:
@@ -3871,7 +3873,9 @@ namespace Microsoft.PowerShell.Commands
                         {
                             value = 0;
                         }
-                    } break;
+                    }
+
+                    break;
 
                 case RegistryValueKind.String:
                     value = (value != null)
