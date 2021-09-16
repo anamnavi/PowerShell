@@ -8,6 +8,7 @@ using Dbg = System.Management.Automation;
 using System.IO;
 using System.Management.Automation.Internal;
 using System.Management.Automation.Security;
+using Microsoft.Security.Extensions;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using DWORD = System.UInt32;
@@ -289,6 +290,7 @@ namespace System.Management.Automation
             return signature;
         }
 
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods")]
         private static Signature GetSignatureFromCatalog(string filename)
         {
@@ -312,8 +314,134 @@ namespace System.Management.Automation
                     NativeMethods.SIGNATURE_INFO sigInfo = new NativeMethods.SIGNATURE_INFO();
                     sigInfo.cbSize = (uint)Marshal.SizeOf(sigInfo);
 
-                    IntPtr ppCertContext = IntPtr.Zero;
-                    IntPtr phStateData = IntPtr.Zero;
+                    Microsoft.Security.Extensions.FileSignatureInfo fileSigInfo = NativeMethods.WTGetSignatureInfoWrapper(filename);
+                    // int hresult = NativeMethods.WTGetSignatureInfo(filename, stream.SafeFileHandle.DangerousGetHandle(),
+                    //     NativeMethods.SIGNATURE_INFO_FLAGS.SIF_CATALOG_SIGNED |
+                    //     NativeMethods.SIGNATURE_INFO_FLAGS.SIF_CATALOG_FIRST |
+                    //     NativeMethods.SIGNATURE_INFO_FLAGS.SIF_AUTHENTICODE_SIGNED |
+                    //     NativeMethods.SIGNATURE_INFO_FLAGS.SIF_BASE_VERIFICATION |
+                    //     NativeMethods.SIGNATURE_INFO_FLAGS.SIF_CHECK_OS_BINARY,
+                    //     ref sigInfo, ref ppCertContext, ref phStateData);
+
+                    /* First – check that the file is signed, the signature isn’t
+                    invalid, and the signature isn’t untrusted; If so, there is no need
+                    to parse further */
+
+                    if (fileSigInfo.State == SignatureState.Unsigned ||
+                        fileSigInfo.State == SignatureState.Invalid ||
+                        fileSigInfo.State == SignatureState.SignedAndNotTrusted)
+                    {
+                        Console.WriteLine("Signature verification failed with: " +
+                        fileSigInfo.StateReason);
+                        return null;
+                    }
+
+                    if (fileSigInfo.TimestampCertificate != null)
+                    {
+                        Console.WriteLine("The signature is valid from: " +
+                        fileSigInfo.TimestampCertificate.NotBefore);
+                    }
+
+                    // TODO: make this condition appropriate
+                    if (fileSigInfo != null) // case A (new)
+                    {
+                        // signingCertificate must be there, else create Signature with error
+                        if (fileSigInfo.SigningCertificate != null) // case B.1 (new)
+                        {
+                            // TODO: ask Rachel if this is how to actually generate error. Or should it be signatureReason?
+                            DWORD error = GetErrorFromSignatureState(fileSigInfo.signatureState);
+                            if (fileSigInfo.TimestampCertificate != null)
+                            {
+                                signature = new Signature(filename, error, fileSigInfo.SigningCertificate, fileSigInfo.TimestampCertificate);
+                            }
+                            else
+                            {
+                                signature = new Signature(filename, error, fileSigInfo.SigningCertificate);
+                            }
+
+                            switch (sigInfo.nSignatureType)
+                            {
+                                case NativeMethods.SIGNATURE_INFO_TYPE.SIT_AUTHENTICODE: signature.SignatureType = SignatureType.Authenticode; break;
+                                case NativeMethods.SIGNATURE_INFO_TYPE.SIT_CATALOG: signature.SignatureType = SignatureType.Catalog; break;
+                            }
+
+                            if (sigInfo.fOSBinary == 1)
+                            {
+                                signature.IsOSBinary = true;
+                            }
+                        }
+                        else
+                        {
+                            signature = new Signature(filename, error);
+                        }
+
+                        // this should stay same, using diff API
+                        if (!Signature.CatalogApiAvailable.HasValue)  // case B.2
+                        {
+                            string productFile = Path.Combine(Utils.DefaultPowerShellAppBase, "Modules\\PSDiagnostics\\PSDiagnostics.psm1");
+                            if (signature.Status != SignatureStatus.Valid)
+                            {
+                                if (string.Equals(filename, productFile, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    Signature.CatalogApiAvailable = false;
+                                }
+                                else
+                                {
+                                    // ProductFile has to be Catalog signed. Hence validating
+                                    // to see if the Catalog API is functional using the ProductFile.
+                                    Signature productFileSignature = GetSignatureFromCatalog(productFile);
+                                    Signature.CatalogApiAvailable = (productFileSignature != null && productFileSignature.Status == SignatureStatus.Valid);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // calling NativeMethods.WTGetSignatureInfoWrapper() failed
+                        // equivalent of: NativeMethods.WTGetSignatureInfo failed (returned a non-zero value)
+                        Signature.CatalogApiAvailable = false;
+
+                    }
+                    
+                }
+            }
+            catch (TypeLoadException)
+            {
+                // If we don't have WTGetSignatureInfo, don't return a Signature.
+                Signature.CatalogApiAvailable = false;
+                return null;
+            }
+
+            return signature;
+        }
+
+
+        /**
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods")]
+        private static Signature GetSignatureFromCatalog(string filename)
+        {
+            if (Signature.CatalogApiAvailable.HasValue && !Signature.CatalogApiAvailable.Value)
+            {
+                // Signature.CatalogApiAvailable would be set to false the first time it is detected that
+                // WTGetSignatureInfo API does not exist on the platform, or if the API is not functional on the target platform.
+                // Just return from the function instead of revalidating.
+                return null;
+            }
+
+            Signature signature = null;
+
+            Utils.CheckArgForNullOrEmpty(filename, "fileName");
+            SecuritySupport.CheckIfFileExists(filename);
+
+            try
+            {
+                using (FileStream stream = File.OpenRead(filename))
+                {
+                    NativeMethods.SIGNATURE_INFO sigInfo = new NativeMethods.SIGNATURE_INFO();
+                    sigInfo.cbSize = (uint)Marshal.SizeOf(sigInfo);
+
+                    IntPtr ppCertContext = IntPtr.Zero; //remove
+                    IntPtr phStateData = IntPtr.Zero; // rmeove
 
                     try
                     {
@@ -326,9 +454,9 @@ namespace System.Management.Automation
                         //     NativeMethods.SIGNATURE_INFO_FLAGS.SIF_CHECK_OS_BINARY,
                         //     ref sigInfo, ref ppCertContext, ref phStateData);
 
-                        /* First – check that the file is signed, the signature isn’t
-                        invalid, and the signature isn’t untrusted; If so, there is no need
-                        to parse further */
+                        // First – check that the file is signed, the signature isn’t
+                        // invalid, and the signature isn’t untrusted; If so, there is no need
+                        // to parse further
 
                         if (fileSigInfo.State == SignatureState.Unsigned ||
                             fileSigInfo.State == SignatureState.Invalid ||
@@ -336,7 +464,7 @@ namespace System.Management.Automation
                         {
                             Console.WriteLine("Signature verification failed with: " +
                             fileSigInfo.StateReason);
-                            return false;
+                            return null;
                         }
 
                         if (fileSigInfo.TimestampCertificate != null)
@@ -345,13 +473,15 @@ namespace System.Management.Automation
                             fileSigInfo.TimestampCertificate.NotBefore);
                         }
 
-                        if (Utils.Succeeded(hresult))
+                        
+                        // replace this with new API
+                        if (Utils.Succeeded(hresult)) // case A
                         {
                             DWORD error = GetErrorFromSignatureState(sigInfo.nSignatureState);
                             X509Certificate2 cert = null;
-                            if (ppCertContext != IntPtr.Zero)
+                            if (ppCertContext != IntPtr.Zero) // case B
                             {
-                                cert = new X509Certificate2(ppCertContext);
+                                cert = new X509Certificate2(ppCertContext); // signing certificate. Always need this one
                                 // Get the time stamper certificate if available
                                 TryGetProviderSigner(phStateData, out IntPtr pProvSigner, out X509Certificate2 timestamperCert);
                                 if (timestamperCert != null)
@@ -379,6 +509,7 @@ namespace System.Management.Automation
                                 signature = new Signature(filename, error);
                             }
 
+                            // this should stay same, using diff API
                             if (!Signature.CatalogApiAvailable.HasValue)
                             {
                                 string productFile = Path.Combine(Utils.DefaultPowerShellAppBase, "Modules\\PSDiagnostics\\PSDiagnostics.psm1");
@@ -404,6 +535,7 @@ namespace System.Management.Automation
                             Signature.CatalogApiAvailable = false;
                         }
                     }
+                    // remove finally block
                     finally
                     {
                         if (phStateData != IntPtr.Zero)
@@ -427,6 +559,7 @@ namespace System.Management.Automation
 
             return signature;
         }
+*/
 
         private static DWORD GetErrorFromSignatureState(NativeMethods.SIGNATURE_STATE state)
         {
