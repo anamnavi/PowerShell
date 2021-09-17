@@ -290,7 +290,6 @@ namespace System.Management.Automation
             return signature;
         }
 
-
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods")]
         private static Signature GetSignatureFromCatalog(string filename)
         {
@@ -345,11 +344,11 @@ namespace System.Management.Automation
                     // TODO: make this condition appropriate
                     if (fileSigInfo != null) // case A (new)
                     {
+                        DWORD error = GetErrorFromNewSignatureState(fileSigInfo.State);
+
                         // signingCertificate must be there, else create Signature with error
                         if (fileSigInfo.SigningCertificate != null) // case B.1 (new)
                         {
-                            // TODO: ask Rachel if this is how to actually generate error. Or should it be signatureReason?
-                            DWORD error = GetErrorFromSignatureState(fileSigInfo.signatureState);
                             if (fileSigInfo.TimestampCertificate != null)
                             {
                                 signature = new Signature(filename, error, fileSigInfo.SigningCertificate, fileSigInfo.TimestampCertificate);
@@ -415,23 +414,20 @@ namespace System.Management.Automation
             return signature;
         }
 
-        private static DWORD GetErrorFromSignatureState(NativeMethods.SIGNATURE_STATE state)
+        private static DWORD GetErrorFromNewSignatureState(Microsoft.Security.Extensions.SignatureState signatureState)
         {
-            switch (state)
+            switch (signatureState)
             {
-                case NativeMethods.SIGNATURE_STATE.SIGNATURE_STATE_UNSIGNED_MISSING: return Win32Errors.TRUST_E_NOSIGNATURE;
-                case NativeMethods.SIGNATURE_STATE.SIGNATURE_STATE_UNSIGNED_UNSUPPORTED: return Win32Errors.TRUST_E_NOSIGNATURE;
-                case NativeMethods.SIGNATURE_STATE.SIGNATURE_STATE_UNSIGNED_POLICY: return Win32Errors.TRUST_E_NOSIGNATURE;
-                case NativeMethods.SIGNATURE_STATE.SIGNATURE_STATE_INVALID_CORRUPT: return Win32Errors.TRUST_E_BAD_DIGEST;
-                case NativeMethods.SIGNATURE_STATE.SIGNATURE_STATE_INVALID_POLICY: return Win32Errors.CRYPT_E_BAD_MSG;
-                case NativeMethods.SIGNATURE_STATE.SIGNATURE_STATE_VALID: return Win32Errors.NO_ERROR;
-                case NativeMethods.SIGNATURE_STATE.SIGNATURE_STATE_TRUSTED: return Win32Errors.NO_ERROR;
-                case NativeMethods.SIGNATURE_STATE.SIGNATURE_STATE_UNTRUSTED: return Win32Errors.TRUST_E_EXPLICIT_DISTRUST;
+                case Microsoft.Security.Extensions.SignatureState.Unsigned: return Win32Errors.TRUST_E_NOSIGNATURE;
+                case Microsoft.Security.Extensions.SignatureState.SignedAndTrusted: return Win32Errors.NO_ERROR;
+                case Microsoft.Security.Extensions.SignatureState.SignedAndNotTrusted: return Win32Errors.TRUST_E_EXPLICIT_DISTRUST;
+                case Microsoft.Security.Extensions.SignatureState.Invalid: return Win32Errors.TRUST_E_BAD_DIGEST;
 
                 // Should not happen
                 default:
-                    System.Diagnostics.Debug.Fail("Should not get here - could not map SIGNATURE_STATE");
+                    System.Diagnostics.Debug.Fail("Should not get here - could not map FileSignatureInfo.State");
                     return Win32Errors.TRUST_E_NOSIGNATURE;
+
             }
         }
 
