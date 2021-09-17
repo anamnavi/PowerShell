@@ -293,6 +293,7 @@ namespace System.Management.Automation
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods")]
         private static Signature GetSignatureFromCatalog(string filename)
         {
+            // TODO: ask Rachel, do we need to adjust this check for the API being nonfunctional for an OS, such as on nanoserver..
             if (Signature.CatalogApiAvailable.HasValue && !Signature.CatalogApiAvailable.Value)
             {
                 // Signature.CatalogApiAvailable would be set to false the first time it is detected that
@@ -310,17 +311,7 @@ namespace System.Management.Automation
             {
                 using (FileStream stream = File.OpenRead(filename))
                 {
-                    NativeMethods.SIGNATURE_INFO sigInfo = new NativeMethods.SIGNATURE_INFO();
-                    sigInfo.cbSize = (uint)Marshal.SizeOf(sigInfo);
-
                     Microsoft.Security.Extensions.FileSignatureInfo fileSigInfo = NativeMethods.WTGetSignatureInfoWrapper(filename);
-                    // int hresult = NativeMethods.WTGetSignatureInfo(filename, stream.SafeFileHandle.DangerousGetHandle(),
-                    //     NativeMethods.SIGNATURE_INFO_FLAGS.SIF_CATALOG_SIGNED |
-                    //     NativeMethods.SIGNATURE_INFO_FLAGS.SIF_CATALOG_FIRST |
-                    //     NativeMethods.SIGNATURE_INFO_FLAGS.SIF_AUTHENTICODE_SIGNED |
-                    //     NativeMethods.SIGNATURE_INFO_FLAGS.SIF_BASE_VERIFICATION |
-                    //     NativeMethods.SIGNATURE_INFO_FLAGS.SIF_CHECK_OS_BINARY,
-                    //     ref sigInfo, ref ppCertContext, ref phStateData);
 
                     /* First – check that the file is signed, the signature isn’t
                     invalid, and the signature isn’t untrusted; If so, there is no need
@@ -330,6 +321,7 @@ namespace System.Management.Automation
                         fileSigInfo.State == SignatureState.Invalid ||
                         fileSigInfo.State == SignatureState.SignedAndNotTrusted)
                     {
+                        // TODO: need to remove Console.Write's
                         Console.WriteLine("Signature verification failed with: " +
                         fileSigInfo.StateReason);
                         return null;
@@ -341,13 +333,12 @@ namespace System.Management.Automation
                         fileSigInfo.TimestampCertificate.NotBefore);
                     }
 
-                    // TODO: make this condition appropriate
-                    if (fileSigInfo != null) // case A (new)
+                    if (fileSigInfo != null)
                     {
-                        DWORD error = GetErrorFromNewSignatureState(fileSigInfo.State);
+                        DWORD error = GetErrorFromSignatureState(fileSigInfo.State);
 
                         // signingCertificate must be there, else create Signature with error
-                        if (fileSigInfo.SigningCertificate != null) // case B.1 (new)
+                        if (fileSigInfo.SigningCertificate != null)
                         {
                             if (fileSigInfo.TimestampCertificate != null)
                             {
@@ -358,13 +349,17 @@ namespace System.Management.Automation
                                 signature = new Signature(filename, error, fileSigInfo.SigningCertificate);
                             }
 
-                            switch (sigInfo.nSignatureType)
+                            switch (fileSigInfo.Kind)
                             {
-                                case NativeMethods.SIGNATURE_INFO_TYPE.SIT_AUTHENTICODE: signature.SignatureType = SignatureType.Authenticode; break;
-                                case NativeMethods.SIGNATURE_INFO_TYPE.SIT_CATALOG: signature.SignatureType = SignatureType.Catalog; break;
+                                case SignatureKind.Embedded: signature.SignatureType = SignatureType.Authenticode; break;
+                                case SignatureKind.Catalog: signature.SignatureType = SignatureType.Catalog; break;
+
+                                default:
+                                    System.Diagnostics.Debug.Fail("Should not get here - SignatureKind should be either Catalog or Embedded");
+                                    break;
                             }
 
-                            if (sigInfo.fOSBinary == 1)
+                            if (fileSigInfo.IsOSBinary)
                             {
                                 signature.IsOSBinary = true;
                             }
@@ -374,8 +369,7 @@ namespace System.Management.Automation
                             signature = new Signature(filename, error);
                         }
 
-                        // this should stay same, using diff API
-                        if (!Signature.CatalogApiAvailable.HasValue)  // case B.2
+                        if (!Signature.CatalogApiAvailable.HasValue)
                         {
                             string productFile = Path.Combine(Utils.DefaultPowerShellAppBase, "Modules\\PSDiagnostics\\PSDiagnostics.psm1");
                             if (signature.Status != SignatureStatus.Valid)
@@ -396,10 +390,11 @@ namespace System.Management.Automation
                     }
                     else
                     {
-                        // calling NativeMethods.WTGetSignatureInfoWrapper() failed
-                        // equivalent of: NativeMethods.WTGetSignatureInfo failed (returned a non-zero value)
+                        // TODO: should we still do this? Follow up with Rachel
+                        // verify if this API she is giving is supported in Windows 7 and newer
+                        // do we still need this bc nanoserver doesn't support this API?
+                        // If calling NativeMethods.WTGetSignatureInfo failed (returned a non-zero value), we still want to set Signature.CatalogApiAvailable to false.
                         Signature.CatalogApiAvailable = false;
-
                     }
                     
                 }
@@ -414,7 +409,7 @@ namespace System.Management.Automation
             return signature;
         }
 
-        private static DWORD GetErrorFromNewSignatureState(Microsoft.Security.Extensions.SignatureState signatureState)
+        private static DWORD GetErrorFromSignatureState(Microsoft.Security.Extensions.SignatureState signatureState)
         {
             switch (signatureState)
             {
