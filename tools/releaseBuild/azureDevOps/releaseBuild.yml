@@ -208,6 +208,18 @@ stages:
             unsignedBuildArtifactName: pwshMarinerBuildArm64.tar.gz
             signedBuildArtifactName: pwshMarinerBuildArm64.tar.gz
             signedArtifactContainer: authenticode-signed
+          linux-azurelinux:
+            runtime: linux-azurelinux
+            unsignedBuildArtifactContainer: pwshAzureLinuxBuildAmd64.tar.gz
+            unsignedBuildArtifactName: pwshAzureLinuxBuildAmd64.tar.gz
+            signedBuildArtifactName: pwshAzureLinuxBuildAmd64.tar.gz
+            signedArtifactContainer: authenticode-signed
+          linux-arm64-azurelinux:
+            runtime: linux-arm64-azurelinux
+            unsignedBuildArtifactContainer: pwshAzureLinuxBuildArm64.tar.gz
+            unsignedBuildArtifactName: pwshAzureLinuxBuildArm64.tar.gz
+            signedBuildArtifactName: pwshAzureLinuxBuildArm64.tar.gz
+            signedArtifactContainer: authenticode-signed
           linux-minsize:
             runtime: linux-minsize
             unsignedBuildArtifactContainer: pwshLinuxBuildMinSize.tar.gz

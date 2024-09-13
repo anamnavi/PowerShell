@@ -9,9 +9,11 @@ Import-Module "$PSScriptRoot\..\Xml" -ErrorAction Stop -Force
 $DebianDistributions = @("deb")
 $RedhatFullDistributions = @("rh")
 $RedhatFddDistributions = @("cm")
+$RedhatFddAzlDistributions = @("azl")
 $RedhatDistributions = @()
 $RedhatDistributions += $RedhatFullDistributions
 $RedhatDistributions += $RedhatFddDistributions
+$RedhatDistributions += $RedhatFddAzlDistributions
 $AllDistributions = @()
 $AllDistributions += $DebianDistributions
 $AllDistributions += $RedhatDistributions
@@ -1085,7 +1087,7 @@ function New-UnixPackage {
         switch ($Type) {
             "deb" {
                 $packageVersion = Get-LinuxPackageSemanticVersion -Version $Version
-                if (!$Environment.IsUbuntu -and !$Environment.IsDebian -and !$Environment.IsMariner) {
+                if (!$Environment.IsUbuntu -and !$Environment.IsDebian -and !$Environment.IsMariner -and !$Environment.IsAzureLinux) {
                     throw ($ErrorMessage -f "Ubuntu or Debian")
                 }
 
@@ -1624,6 +1626,16 @@ function Get-PackageDependencies
                     "dotnet-runtime-9.0"
                 )
             }
+        } elseif ($Distribution -eq 'azl') {
+            $Dependencies = @(
+                "glibc"
+                "libgcc"
+                "krb5"
+                "libstdc++"
+                "zlib"
+                "icu"
+                "openssl-libs"
+            )
         } elseif ($Distribution -eq 'macOS') {
             # do nothing
         } else {
@@ -4388,9 +4400,11 @@ ${mainLinuxBuildFolder} = 'pwshLinuxBuild'
 ${minSizeLinuxBuildFolder} = 'pwshLinuxBuildMinSize'
 ${arm32LinuxBuildFolder} = 'pwshLinuxBuildArm32'
 ${arm64LinuxBuildFolder} = 'pwshLinuxBuildArm64'
+${amd64AzureLinuxBuildFolder} = 'pwshAzureLinuxBuildAmd64'
 ${amd64MarinerBuildFolder} = 'pwshMarinerBuildAmd64'
 ${amd64AlpineFxdBuildFolder} = 'pwshAlpineFxdBuildAmd64'
 ${arm64MarinerBuildFolder} = 'pwshMarinerBuildArm64'
+${arm64AzureLinuxBuildFolder} = 'pwshAzureLinuxBuildArm64'
 
 <#
     Used in Azure DevOps Yaml to package all the linux packages for a channel.
@@ -4493,6 +4507,30 @@ function Invoke-AzDevOpsLinuxPackageCreation {
             Write-Verbose -Verbose "options.Top $($options.Top)"
 
             Start-PSPackage -Type rpm-fxdependent-arm64 @releaseTagParam -LTS:$LTS
+
+            # Generate azure linux amd64 package
+            Write-Verbose -Verbose "Generating azure linux amd64 package"
+            Restore-PSOptions -PSOptionsPath "${env:SYSTEM_ARTIFACTSDIRECTORY}\${amd64AzureLinuxBuildFolder}-meta\psoptions.json"
+            $filePermissionFile = "${env:SYSTEM_ARTIFACTSDIRECTORY}\${amd64AzureLinuxBuildFolder}-meta\linuxFilePermission.json"
+            Set-LinuxFilePermission -FilePath $filePermissionFile -RootPath "${env:SYSTEM_ARTIFACTSDIRECTORY}\${amd64AzureLinuxBuildFolder}"
+
+            Write-Verbose -Verbose "---- rpm-fxdependent ----"
+            Write-Verbose -Verbose "options.Output: $($options.Output)"
+            Write-Verbose -Verbose "options.Top $($options.Top)"
+
+            Start-PSPackage -Type rpm-fxdependent @releaseTagParam -LTS:$LTS
+
+            # Generate azure linux arm64 package
+            Write-Verbose -Verbose "Generating azure linux arm64 package"
+            Restore-PSOptions -PSOptionsPath "${env:SYSTEM_ARTIFACTSDIRECTORY}\${arm64AzureLinuxBuildFolder}-meta\psoptions.json"
+            $filePermissionFile = "${env:SYSTEM_ARTIFACTSDIRECTORY}\${arm64AzureLinuxBuildFolder}-meta\linuxFilePermission.json"
+            Set-LinuxFilePermission -FilePath $filePermissionFile -RootPath "${env:SYSTEM_ARTIFACTSDIRECTORY}\${arm64AzureLinuxBuildFolder}"
+
+            Write-Verbose -Verbose "---- rpm-fxdependent ----"
+            Write-Verbose -Verbose "options.Output: $($options.Output)"
+            Write-Verbose -Verbose "options.Top $($options.Top)"
+
+            Start-PSPackage -Type rpm-fxdependent @releaseTagParam -LTS:$LTS
         } elseif ($BuildType -eq 'alpine') {
             Restore-PSOptions -PSOptionsPath "${env:SYSTEM_ARTIFACTSDIRECTORY}\${amd64AlpineFxdBuildFolder}-meta\psoptions.json"
             $filePermissionFile = "${env:SYSTEM_ARTIFACTSDIRECTORY}\${amd64AlpineFxdBuildFolder}-meta\linuxFilePermission.json"
@@ -4624,6 +4662,44 @@ function Invoke-AzDevOpsLinuxPackageBuild {
             # Remove symbol files, xml document files.
             Remove-Item "${buildFolder}\*.pdb", "${buildFolder}\*.xml" -Force
             Get-ChildItem -Path $buildFolder -Recurse -File | Export-LinuxFilePermission -FilePath "${buildFolder}-meta/linuxFilePermission.json" -RootPath ${buildFolder} -Force
+
+            ## Build for Azure Linux amd64
+            $options = Get-PSOptions
+            Write-Verbose -Verbose "---- Azure Linux x64 ----"
+            Write-Verbose -Verbose "options.Output: $($options.Output)"
+            Write-Verbose -Verbose "options.Top $($options.Top)"
+            $binDir = Join-Path -Path $options.Top -ChildPath 'bin'
+            if (Test-Path -Path $binDir) {
+                Write-Verbose -Verbose "Remove $binDir, to get a clean build for Azure Linux x64 package"
+                Remove-Item -Path $binDir -Recurse -Force
+            }
+
+            $buildParams['Runtime'] = 'fxdependent-linux-x64'
+            $buildFolder = "${env:SYSTEM_ARTIFACTSDIRECTORY}/${amd64AzureLinuxBuildFolder}"
+            Start-PSBuild -Clean @buildParams @releaseTagParam -Output $buildFolder -PSOptionsPath "${buildFolder}-meta/psoptions.json"
+            # Remove symbol files, xml document files.
+            Remove-Item "${buildFolder}\*.pdb", "${buildFolder}\*.xml" -Force
+            Get-ChildItem -Path $buildFolder -Recurse -File | Export-LinuxFilePermission -FilePath "${buildFolder}-meta/linuxFilePermission.json" -RootPath ${buildFolder} -Force
+
+            ## Build for Azure Linux arm64
+            $options = Get-PSOptions
+            Write-Verbose -Verbose "---- Azure Linux arm64 ----"
+
+            Write-Verbose -Verbose "options.Output: $($options.Output)"
+            Write-Verbose -Verbose "options.Top $($options.Top)"
+            $binDir = Join-Path -Path $options.Top -ChildPath 'bin'
+            if (Test-Path -Path $binDir) {
+                Write-Verbose -Verbose "Remove $binDir, to get a clean build for Azure Linux arm64 package"
+                Remove-Item -Path $binDir -Recurse -Force
+            }
+
+            $buildParams['Runtime'] = 'fxdependent-linux-arm64'
+            $buildFolder = "${env:SYSTEM_ARTIFACTSDIRECTORY}/${arm64AzureLinuxBuildFolder}"
+
+            Start-PSBuild -Clean @buildParams @releaseTagParam -Output $buildFolder -PSOptionsPath "${buildFolder}-meta/psoptions.json"
+            # Remove symbol files, xml document files.
+            Remove-Item "${buildFolder}\*.pdb", "${buildFolder}\*.xml" -Force
+            Get-ChildItem -Path $buildFolder -Recurse -File | Export-LinuxFilePermission -FilePath "${buildFolder}-meta/linuxFilePermission.json" -RootPath ${buildFolder} -Force
         } elseif ($BuildType -eq 'alpine') {
             ## Build for alpine fxdependent
             $options = Get-PSOptions
@@ -4632,7 +4708,7 @@ function Invoke-AzDevOpsLinuxPackageBuild {
             Write-Verbose -Verbose "options.Top $($options.Top)"
             $binDir = Join-Path -Path $options.Top -ChildPath 'bin'
             if (Test-Path -Path $binDir) {
-                Write-Verbose -Verbose "Remove $binDir, to get a clean build for Mariner package"
+                Write-Verbose -Verbose "Remove $binDir, to get a clean build for alpine package"
                 Remove-Item -Path $binDir -Recurse -Force
             }
 

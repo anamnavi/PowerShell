@@ -111,6 +111,26 @@ jobs:
         PackageVersion: $(Version)
         sourceScanPath: '$(PowerShellRoot)/tools'
 
+  - ${{ if eq(variables.build,'rpm') }} :
+    - template: Sbom.yml@ComplianceRepo
+      parameters:
+        BuildDropPath: '$(System.ArtifactsDirectory)/pwshAzureLinuxBuildAmd64'
+        Build_Repository_Uri: $(Github_Build_Repository_Uri)
+        displayName: AzureLinux x64 SBOM
+        PackageName: PowerShell Linux Framework Dependent
+        PackageVersion: $(Version)
+        sourceScanPath: '$(PowerShellRoot)/tools'
+
+  - ${{ if eq(variables.build,'rpm') }} :
+    - template: Sbom.yml@ComplianceRepo
+      parameters:
+        BuildDropPath: '$(System.ArtifactsDirectory)/pwshAzureLinuxBuildArm64'
+        Build_Repository_Uri: $(Github_Build_Repository_Uri)
+        displayName: AzureLinux arm64 SBOM
+        PackageName: PowerShell Linux Framework Dependent
+        PackageVersion: $(Version)
+        sourceScanPath: '$(PowerShellRoot)/tools'
+
   - ${{ if eq(variables.build,'deb') }} :
     - template: Sbom.yml@ComplianceRepo
       parameters:
@@ -174,17 +194,29 @@ jobs:
         tar -czvf $(System.ArtifactsDirectory)/pwshMarinerBuildAmd64.tar.gz *
       displayName: Compress pwshMarinerBuildAmd64
 
-  - ${{ if eq(variables.build,'alpine') }} :
-    - pwsh: |
-        Set-Location '$(System.ArtifactsDirectory)/pwshAlpineFxdBuildAmd64'
-        tar -czvf $(System.ArtifactsDirectory)/pwshAlpineFxdBuildAmd64.tar.gz *
-      displayName: Compress pwshAlpineFxdBuildAmd64
-
   - ${{ if eq(variables.build,'rpm') }} :
     - pwsh: |
         Set-Location '$(System.ArtifactsDirectory)/pwshMarinerBuildArm64'
         tar -czvf $(System.ArtifactsDirectory)/pwshMarinerBuildArm64.tar.gz *
       displayName: Compress pwshMarinerBuildArm64
+
+  - ${{ if eq(variables.build,'rpm') }} :
+    - pwsh: |
+        Set-Location '$(System.ArtifactsDirectory)/pwshAzureLinuxBuildAmd64'
+        tar -czvf $(System.ArtifactsDirectory)/pwshAzureLinuxBuildAmd64.tar.gz *
+      displayName: Compress pwshAzureLinuxBuildAmd64
+
+  - ${{ if eq(variables.build,'rpm') }} :
+    - pwsh: |
+        Set-Location '$(System.ArtifactsDirectory)/pwshAzureLinuxBuildArm64'
+        tar -czvf $(System.ArtifactsDirectory)/pwshAzureLinuxBuildArm64.tar.gz *
+      displayName: Compress pwshAzureLinuxBuildArm64      
+
+  - ${{ if eq(variables.build,'alpine') }} :
+    - pwsh: |
+        Set-Location '$(System.ArtifactsDirectory)/pwshAlpineFxdBuildAmd64'
+        tar -czvf $(System.ArtifactsDirectory)/pwshAlpineFxdBuildAmd64.tar.gz *
+      displayName: Compress pwshAlpineFxdBuildAmd64
 
   - ${{ if eq(variables.build,'deb') }} :
     - task: PublishPipelineArtifact@1
@@ -268,6 +300,34 @@ jobs:
       inputs:
         path: '$(System.ArtifactsDirectory)/pwshMarinerBuildArm64-meta'
         artifactName: pwshMarinerBuildArm64-meta
+      retryCountOnTaskFailure: 2
+
+  - ${{ if eq(variables.build,'rpm') }} :
+    - task: PublishPipelineArtifact@1
+      inputs:
+        path: '$(System.ArtifactsDirectory)/pwshAzureLinuxBuildAmd64.tar.gz'
+        artifactName: pwshAzureLinuxBuildAmd64.tar.gz
+      retryCountOnTaskFailure: 2
+
+  - ${{ if eq(variables.build,'rpm') }} :
+    - task: PublishPipelineArtifact@1
+      inputs:
+        path: '$(System.ArtifactsDirectory)/pwshAzureLinuxBuildAmd64-meta'
+        artifactName: pwshAzureLinuxBuildAmd64-meta
+      retryCountOnTaskFailure: 2
+
+  - ${{ if eq(variables.build,'rpm') }} :
+    - task: PublishPipelineArtifact@1
+      inputs:
+        path: '$(System.ArtifactsDirectory)/pwshAzureLinuxBuildArm64.tar.gz'
+        artifactName: pwshAzureLinuxBuildArm64.tar.gz
+      retryCountOnTaskFailure: 2
+
+  - ${{ if eq(variables.build,'rpm') }} :
+    - task: PublishPipelineArtifact@1
+      inputs:
+        path: '$(System.ArtifactsDirectory)/pwshAzureLinuxBuildArm64-meta'
+        artifactName: pwshAzureLinuxBuildArm64-meta
       retryCountOnTaskFailure: 2
 
   - ${{ if eq(variables.build,'alpine') }} :

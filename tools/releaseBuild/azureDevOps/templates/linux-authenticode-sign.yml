@@ -56,6 +56,18 @@ jobs:
 
   - task: DownloadPipelineArtifact@2
     inputs:
+      artifact: pwshAzureLinuxBuildAmd64.tar.gz
+      path: $(Build.ArtifactStagingDirectory)/linuxTars
+    displayName: Download azure linux build
+
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      artifact: pwshAzureLinuxBuildArm64.tar.gz
+      path: $(Build.ArtifactStagingDirectory)/linuxTars
+    displayName: Download azure linux arm64 build
+
+  - task: DownloadPipelineArtifact@2
+    inputs:
       artifact: pwshLinuxBuildAlpine.tar.gz
       path: $(Build.ArtifactStagingDirectory)/linuxTars/pwshLinuxBuildAlpine.tar.gz
     displayName: Download alpine build
@@ -102,6 +114,14 @@ jobs:
       Write-Verbose -Verbose -Message "Expanding $(Build.ArtifactStagingDirectory)/linuxTars/pwshMarinerBuildArm64.tar.gz to $(Build.ArtifactStagingDirectory)/pwshMarinerBuildArm64"
       New-Item -Path $(Build.ArtifactStagingDirectory)/pwshMarinerBuildArm64 -ItemType Directory
       tar -xf $(Build.ArtifactStagingDirectory)/linuxTars/pwshMarinerBuildArm64.tar.gz -C $(Build.ArtifactStagingDirectory)/pwshMarinerBuildArm64
+
+      Write-Verbose -Verbose -Message "Expanding $(Build.ArtifactStagingDirectory)/linuxTars/pwshAzureLinuxBuildAmd64.tar.gz to $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildAmd64"
+      New-Item -Path $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildAmd64 -ItemType Directory
+      tar -xf $(Build.ArtifactStagingDirectory)/linuxTars/pwshAzureLinuxBuildAmd64.tar.gz -C $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildAmd64
+
+      Write-Verbose -Verbose -Message "Expanding $(Build.ArtifactStagingDirectory)/linuxTars/pwshAzureLinuxBuildArm64.tar.gz to $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildArm64"
+      New-Item -Path $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildArm64 -ItemType Directory
+      tar -xf $(Build.ArtifactStagingDirectory)/linuxTars/pwsAzureLinuxBuildArm64.tar.gz -C $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildArm64
 
       Write-Verbose -Verbose -Message "Expanding $(Build.ArtifactStagingDirectory)/linuxTars/pwshLinuxBuildAlpine.tar.gz/pwshLinuxBuild.tar.gz to $(Build.ArtifactStagingDirectory)/pwshLinuxBuildAlpine"
       New-Item -Path $(Build.ArtifactStagingDirectory)/pwshLinuxBuildAlpine -ItemType Directory
@@ -167,6 +187,16 @@ jobs:
     parameters:
       binLocation: pwshMarinerBuildArm64
       buildPrefixName: 'PowerShell Linux arm64 (Mariner) Framework Dependent'
+
+  - template: signBuildFiles.yml
+    parameters:
+      binLocation: pwshAzureLinuxBuildAmd64
+      buildPrefixName: 'PowerShell Linux x64 (AzureLinux) Framework Dependent'
+
+  - template: signBuildFiles.yml
+    parameters:
+      binLocation: pwshAzureLinuxBuildArm64
+      buildPrefixName: 'PowerShell Linux arm64 (AzureLinux) Framework Dependent'
 
   - template: signBuildFiles.yml
     parameters:

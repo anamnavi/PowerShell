@@ -192,6 +192,7 @@ function Get-EnvironmentInformation
         $environment += @{'IsSUSEFamily' = $environment.IsSLES -or $environment.IsOpenSUSE}
         $environment += @{'IsAlpine' = $LinuxInfo.ID -match 'alpine'}
         $environment += @{'IsMariner' = $LinuxInfo.ID -match 'mariner'}
+        $environment += @{'IsAzureLinux' = $LinuxInfo.ID -match 'azurelinux'}
 
         # Workaround for temporary LD_LIBRARY_PATH hack for Fedora 24
         # https://github.com/PowerShell/PowerShell/issues/2511

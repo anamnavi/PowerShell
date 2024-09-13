@@ -54,6 +54,38 @@
           "channel": "preview"
       },
       {
+        "url": "azure-linux-3.0-prod-Microsoft-aarch64",
+        "distribution": [
+            "bionic"
+        ],
+        "PackageFormat": "PACKAGE_NAME-POWERSHELL_RELEASE-1.azl.aarch64.rpm",
+        "channel": "stable"
+      },
+      {
+          "url": "azure-linux-3.0-prod-Microsoft-x86_64",
+          "distribution": [
+              "bionic"
+          ],
+          "PackageFormat": "PACKAGE_NAME-POWERSHELL_RELEASE-1.azl.x86_64.rpm",
+          "channel": "stable"
+      },
+      {
+          "url": "azl-linux-3.0-preview-Microsoft-aarch64",
+          "distribution": [
+              "bionic"
+          ],
+          "PackageFormat": "PACKAGE_NAME-POWERSHELL_RELEASE-1.azl.aarch64.rpm",
+          "channel": "preview"
+      },
+      {
+          "url": "azure-linux-3.0-preview-Microsoft-x86_64",
+          "distribution": [
+              "bionic"
+          ],
+          "PackageFormat": "PACKAGE_NAME-POWERSHELL_RELEASE-1.azl.x86_64.rpm",
+          "channel": "preview"
+      },
+      {
           "url": "microsoft-debian-stretch-prod",
           "distribution": [
               "stretch"

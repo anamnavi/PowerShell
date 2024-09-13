@@ -69,6 +69,22 @@ jobs:
         pattern: '**/pwshMarinerBuildArm64.tar.gz'
       displayName: Download mariner arm64 build
 
+  - ${{ if eq(variables.build,'rpm') }} :
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        artifact: authenticode-signed
+        path: $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildAmd64-signed
+        pattern: '**/pwshAzureLinuxBuildAmd64.tar.gz'
+      displayName: Download azure linux amd64 build
+
+  - ${{ if eq(variables.build,'rpm') }} :
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        artifact: authenticode-signed
+        path: $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildArm64-signed
+        pattern: '**/pwshAzureLinuxBuildArm64.tar.gz'
+      displayName: Download azure linux arm64 build
+
   - ${{ if eq(variables.build,'alpine') }} :
     - task: DownloadPipelineArtifact@2
       inputs:
@@ -135,6 +151,20 @@ jobs:
         path: $(Build.ArtifactStagingDirectory)/pwshMarinerBuildArm64-meta
       displayName: Download mariner arm64 build meta
 
+  - ${{ if eq(variables.build,'rpm') }} :
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        artifact: pwshAzureLinuxBuildAmd64-meta
+        path: $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildAmd64-meta
+      displayName: Download azure linux x64 build meta
+
+  - ${{ if eq(variables.build,'rpm') }} :
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        artifact: pwshAzureLinuxBuildArm64-meta
+        path: $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildArm64-meta
+      displayName: Download azure linux arm64 build meta
+
   - ${{ if eq(variables.build,'alpine') }} :
     - task: DownloadPipelineArtifact@2
       inputs:
@@ -191,6 +221,16 @@ jobs:
         Write-Verbose -Verbose "Expanding $(Build.ArtifactStagingDirectory)/pwshMarinerBuildArm64-signed/pwshMarinerBuildArm64.tar.gz to $(Build.ArtifactStagingDirectory)/pwshMarinerBuildArm64"
         New-Item -Path $(Build.ArtifactStagingDirectory)/pwshMarinerBuildArm64 -ItemType Directory
         tar -xf $(Build.ArtifactStagingDirectory)/pwshMarinerBuildArm64-signed/pwshMarinerBuildArm64.tar.gz -C $(Build.ArtifactStagingDirectory)/pwshMarinerBuildArm64
+
+        # for azure linux x64
+        Write-Verbose -Verbose "Expanding $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildAmd64-signed/pwshAzureLinuxBuildAmd64.tar.gz to $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildAmd64"
+        New-Item -Path $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildAmd64 -ItemType Directory
+        tar -xf $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildAmd64-signed/pwshAzureLinuxBuildAmd64.tar.gz -C $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildAmd64
+
+        # for azure linux arm64
+        Write-Verbose -Verbose "Expanding $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildArm64-signed/pwshAzureLinuxBuildArm64.tar.gz to $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildArm64"
+        New-Item -Path $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildArm64 -ItemType Directory
+        tar -xf $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildArm64-signed/pwshAzureLinuxBuildArm64.tar.gz -C $(Build.ArtifactStagingDirectory)/pwshAzureLinuxBuildArm64
       }
 
       if ('$(build)' -eq 'alpine') {
@@ -417,6 +457,21 @@ jobs:
           useMinimatch: true
           shouldSign: $(SHOULD_SIGN)
           displayName: Sign Mariner RPM
+          OutputMode: NeverCopy
+
+  - ${{ if eq(variables['buildName'], 'RPM') }}:
+    - template: EsrpSign.yml@ComplianceRepo
+      parameters:
+          # Sign in-place, previous task copied the files to this folder
+          buildOutputPath: $(Build.StagingDirectory)\signedPackages
+          signOutputPath: $(Build.StagingDirectory)\signedPackages
+          certificateId: "CP-459159-Pgp"
+          pattern: |
+            **\*.azl.*.rpm
+            **\*.azl?.*.rpm
+          useMinimatch: true
+          shouldSign: $(SHOULD_SIGN)
+          displayName: Sign Azure Linux RPM
           OutputMode: NeverCopy
 
   # requires windows
