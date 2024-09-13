@@ -180,6 +180,23 @@ extends:
           jobName: mariner_arm64
           signingProfile: 'CP-459159-pgpdetached'
 
+
+      - template: /.pipelines/templates/linux-package-build.yml@self
+        parameters:
+          unsignedDrop: 'drop_linux_build_linux_fxd_x64_azurelinux'
+          signedDrop: 'drop_linux_sign_linux_fxd_x64_azurelinux'
+          packageType: rpm-fxdependent  #azurelinux-x64
+          jobName: azurelinux_x64
+          signingProfile: 'CP-459159-pgpdetached'
+
+      - template: /.pipelines/templates/linux-package-build.yml@self
+        parameters:
+          unsignedDrop: 'drop_linux_build_linux_fxd_arm64_azurelinux'
+          signedDrop: 'drop_linux_sign_linux_fxd_arm64_azurelinux'
+          packageType: rpm-fxdependent-arm64 #azurelinux-arm64
+          jobName: azurelinux_arm64
+          signingProfile: 'CP-459159-pgpdetached'
+
       - template: /.pipelines/templates/linux-package-build.yml@self
         parameters:
           unsignedDrop: 'drop_linux_build_linux_x64'

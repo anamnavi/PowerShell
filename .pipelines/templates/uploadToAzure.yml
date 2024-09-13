@@ -81,6 +81,22 @@ jobs:
   - task: DownloadPipelineArtifact@2
     inputs:
       buildType: 'current'
+      artifact: drop_linux_package_azurelinux_arm64
+      itemPattern: '**/*.rpm'
+      targetPath: '$(Build.ArtifactStagingDirectory)/downloads'
+    displayName: Download linux azurelinux arm64 package
+
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      buildType: 'current'
+      artifact: drop_linux_package_azurelinux_x64
+      itemPattern: '**/*.rpm'
+      targetPath: '$(Build.ArtifactStagingDirectory)/downloads'
+    displayName: Download linux azurelinux x64 package
+
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      buildType: 'current'
       artifact: drop_linux_package_minSize
       itemPattern: '**/*.tar.gz'
       targetPath: '$(Build.ArtifactStagingDirectory)/downloads'
