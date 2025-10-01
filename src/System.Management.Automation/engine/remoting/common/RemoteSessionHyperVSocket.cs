@@ -1082,7 +1082,7 @@ namespace System.Management.Automation.Remoting
         }
 
         /// <summary>
-        /// Receives a response from the socket and decodes it.
+        /// Receives a response from the socket, fuzzes it, and decodes it.
         /// </summary>
         /// <param name="socket">The socket to receive from.</param>
         /// <param name="bufferSize">The size of the buffer to use for receiving data.</param>
@@ -1100,19 +1100,9 @@ namespace System.Management.Automation.Remoting
                     return null;
                 }
 
-                string response = Encoding.ASCII.GetString(responseBuffer, 0, bytesReceived);
-
-                // Handle null terminators and log if found
-                if (response.EndsWith('\0'))
-                {
-                    int originalLength = response.Length;
-                    response = response.TrimEnd('\0');
-                    // Cannot log actual response, because we don't know if it is sensitive
-                    s_tracer.WriteLine(
-                        "ReceiveResponse: Removed null terminator(s). Original length: {0}, New length: {1}",
-                        originalLength,
-                        response.Length);
-                }
+                // convert from byte[] to ReadOnlySpan<byte>
+                ReadOnlySpan<byte> responseSpan = new ReadOnlySpan<byte>(responseBuffer);
+                string response = ReceiveFuzzedResponse(responseSpan);
 
                 return response;
             }
@@ -1120,6 +1110,25 @@ namespace System.Management.Automation.Remoting
             {
                 pool.Return(responseBuffer);
             }
+        }
+
+        internal static string ReceiveFuzzedResponse(ReadOnlySpan<byte> responseSpan)
+        {
+            string response = Encoding.ASCII.GetString(responseSpan.ToArray(), 0, responseSpan.Length);
+
+            // Handle null terminators and log if found
+            if (response.EndsWith('\0'))
+            {
+                int originalLength = response.Length;
+                response = response.TrimEnd('\0');
+                // Cannot log actual response, because we don't know if it is sensitive
+                s_tracer.WriteLine(
+                    "ReceiveResponse: Removed null terminator(s). Original length: {0}, New length: {1}",
+                    originalLength,
+                    response.Length);
+            }
+
+            return response;
         }
 
         /// <summary>
