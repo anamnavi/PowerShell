@@ -462,6 +462,8 @@ namespace System.Management.Automation.Remoting
         }
     }
 
+
+
     internal sealed class RemoteSessionHyperVSocketClient : IDisposable
     {
         #region Members
@@ -1120,6 +1122,51 @@ namespace System.Management.Automation.Remoting
             {
                 pool.Return(responseBuffer);
             }
+        }
+
+
+        internal static string ExtractFuzzedToken(ReadOnlySpan<byte> buffer)
+        {
+            string token = ReceiveResponse(HyperVSocket, 1024); // either "PASS" or "FAIL"
+            if (token == null || !token.StartsWith("TOKEN ", StringComparison.Ordinal))
+            {
+                s_tracer.WriteLine("ExchangeCredentialsAndConfiguration: Server did not respond with a valid token. Response: {0}", token);
+                throw new PSDirectException(
+                    PSRemotingErrorInvariants.FormatResourceString(RemotingErrorIdStrings.HyperVInvalidResponse, "Broker", "Token " + token));
+            }
+
+            token = token.Substring(6); // remove "TOKEN " prefix
+
+            ///////
+            responseString = RemoteSessionHyperVSocketClient.ReceiveResponse(socket, 110);
+
+            // Final check if we got the token before the timeout
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (string.IsNullOrEmpty(responseString) || !responseString.StartsWith("TOKEN ", StringComparison.Ordinal))
+            {
+                socket.Send("FAIL"u8);
+                // If the response is not in the expected format, we throw an exception.
+                // This is a failure to authenticate the client.
+                // don't send this response for risk of information disclosure.
+                throw new PSDirectException(
+                    PSRemotingErrorInvariants.FormatResourceString(RemotingErrorIdStrings.HyperVInvalidResponse, "Client", "Token Response"));
+            }
+
+            // Extract the token from the response.
+            string responseToken = responseString.Substring(6).Trim();
+
+            if (!string.Equals(responseToken, token, StringComparison.Ordinal))
+            {
+                socket.Send("FAIL"u8);
+                throw new PSDirectException(
+                    PSRemotingErrorInvariants.FormatResourceString(RemotingErrorIdStrings.InvalidCredential));
+            }
+        }
+
+        internal static string ValidateFuzzedToken(string token)
+        {
+            return token;
         }
 
         /// <summary>
