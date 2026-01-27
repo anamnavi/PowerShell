@@ -1128,8 +1128,7 @@ namespace Microsoft.PowerShell.Commands
         {
             try
             {
-                string eventVwrExe = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System),
-                    "eventvwr.exe");
+                string eventVwrExe = Platform.SafeDeriveFromSpecialFolder(Environment.SpecialFolder.System, @"eventvwr.exe");
                 Process.Start(eventVwrExe, ComputerName);
             }
             catch (Win32Exception e)
